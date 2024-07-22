@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Conversion</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            background-color: rgb(46, 71, 69);
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        .heading {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 20px;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        form {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 400px;
+            animation: slideUp 1.5s ease-out;
+        }
+
+        h3 {
+            margin: 15px 0;
+            font-size: 1.2em;
+        }
+
+        select, input {
+            width: calc(50% - 20px);
+            margin: 10px;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease-in-out;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        #button {
+            display: block;
+            width: 120px;
+            height: 40px;
+            background-color: aqua;
+            cursor: pointer;
+            border: none;
+            border-radius: 20px;
+            margin: 30px auto 0;
+            font-size: 1em;
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s, transform 0.3s;
+            animation: bounce 2s infinite;
+        }
+
+        #button:hover {
+            background-color: #00cccc;
+            transform: scale(1.1);
+        }
+
+        #output {
+            margin-top: 30px;
+            font-size: 1.2em;
+            text-align: center;
+            min-height: 30px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            animation: fadeIn 1s ease-in-out;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="heading">Currency Conversion</h1>
+    <form id="currency">
+        <h3><label for="from_currency">FROM</label> <label class="fromamount" for="fromamount">AMOUNT</label></h3>
+        <select name="from_currency" id="fromcurrency" class="currency" style="cursor: pointer;"></select>
+        <input type="number" id="fromamountinput" class="currency">
+        <h3 style="margin-top: 80px;"><label for="to_currency">TO</label></h3>
+        <select name="to_currency" id="tocurrency" class="currency" style="cursor: pointer;"></select>
+        <h3 style="font-size: 25px;">Result</h3>
+        <span id="output"></span>
+        <button type="button" id="button">Convert</button>
+    </form>
+
+    <script>
+        $(document).ready(function(){
+            var my_api = 'deb5cf29f43a2dd57f39194a';
+            var fromcurrencyselect = $("#fromcurrency");
+            var tocurrencyselect = $("#tocurrency");
+
+            // Get request function to get the currencies
+            function currencyoptions(){
+                $.get("https://v6.exchangerate-api.com/v6/"+ my_api +"/codes", function(currency_name){
+                    var currency_list = currency_name.supported_codes;
+                    var options = currency_list.map(currency => `<option value='${currency[0]}'>${currency[1]} (${currency[0]})</option>`);
+                    fromcurrencyselect.html(options);
+                    tocurrencyselect.html(options);
+                });
+            }
+
+            currencyoptions();
+
+            // Function to format number with commas
+            function formatNumberWithCommas(number) {
+                return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+
+            // Sending the selected currencies, and fetching the corresponding values.
+            $("#button").click(function(event){
+                event.preventDefault();
+                var fromcurrency = fromcurrencyselect.val();
+                var tocurrency = tocurrencyselect.val();
+                var amount = $("#fromamountinput").val();
+                
+                if(amount === "") {
+                    $("#output").html("Invalid input").css("color", "red").show();
+                    return;
+                }
+
+                $.get(`https://v6.exchangerate-api.com/v6/${my_api}/pair/${fromcurrency}/${tocurrency}/${amount}`, function(result){
+                    var conversionResult = result.conversion_result;
+                    var formattedAmount = formatNumberWithCommas(amount);
+                    var formattedResult = formatNumberWithCommas(conversionResult.toFixed(2));
+                    $("#output").html(`${formattedAmount} ${fromcurrency} equals to ${formattedResult} ${tocurrency}`).css("color", "white").show();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
